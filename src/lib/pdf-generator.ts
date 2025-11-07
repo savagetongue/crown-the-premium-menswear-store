@@ -36,14 +36,13 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   y += 6;
   // Customer Info
   doc.text(`Bill To: ${invoice.customer.name}`, 15, y);
-  doc.text(`Phone: ${invoice.customer.phone || 'N/A'}`, 140, y);
   y += 10;
   // Items Table
   const tableData = invoice.items.map((item, index) => [
     index + 1,
     item.productName,
     item.quantity,
-    `₹${item.price.toFixed(2)}`,
+    `���${item.price.toFixed(2)}`,
     item.discount > 0 ? (item.discountType === 'fixed' ? `-₹${item.discount.toFixed(2)}` : `-${item.discount}%`) : '-',
     `₹${(item.price * item.quantity).toFixed(2)}`,
   ]);

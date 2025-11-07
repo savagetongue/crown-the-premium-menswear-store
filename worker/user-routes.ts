@@ -39,7 +39,7 @@ function amountToWords(amount: number): string {
   const rupees = words.trim();
   const paise = Math.round((amount - Math.floor(amount)) * 100);
   if (paise > 0) {
-    return `${rupes} Rupees and ${toWords(paise)} Paise Only`;
+    return `${rupees} Rupees and ${toWords(paise)} Paise Only`;
   } else {
     return `${rupees} Rupees Only`;
   }

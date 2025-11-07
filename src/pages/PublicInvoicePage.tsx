@@ -34,7 +34,6 @@ function InvoiceView({ invoice, settings }: { invoice: Invoice; settings: StoreS
         <div className="mb-8">
           <h3 className="font-semibold">Bill To</h3>
           <p className="text-muted-foreground">{invoice.customer.name}</p>
-          <p className="text-muted-foreground">{invoice.customer.phone}</p>
         </div>
         <Table>
           <TableHeader>
