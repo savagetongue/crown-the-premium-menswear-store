@@ -94,7 +94,7 @@ export function BillingPage() {
       discount: item.discount,
       discountType: item.discountType
     }));
-    const finalCustomerName = customerName.trim() === '' ? 'Walk-in Customer' : customerName;
+    const finalCustomerName = customerName.trim() || 'Walk-in Customer';
     const newInvoice = {
       customer: { name: finalCustomerName, phone: customerPhone },
       items: invoiceItems,
