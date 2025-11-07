@@ -77,13 +77,7 @@ function updateWranglerJsonc() {
 }
 
 function runSetupCommands() {
-    const commands = [
-    "bun add jspdf@^2.5.1",
-    "bun add jspdf-autotable@^3.8.2",
-    "bun add qrcode.react@^3.1.0",
-    "bun install qrcode",
-    "bun add @types/qrcode"
-];
+    const commands = [];
     
     if (commands.length === 0) {
         console.log('⊘ No setup commands to run');
