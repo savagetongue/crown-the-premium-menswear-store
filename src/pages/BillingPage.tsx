@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 export function BillingPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [customerName, setCustomerName] = useState('Walk-in Customer');
+  const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [billDiscount, setBillDiscount] = useState(0);
   const [billDiscountType, setBillDiscountType] = useState<'percentage' | 'fixed'>('fixed');
@@ -51,7 +51,7 @@ export function BillingPage() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       clearCart();
-      setCustomerName('Walk-in Customer');
+      setCustomerName('');
       setCustomerPhone('');
       setBillDiscount(0);
       if (data.customer.phone) {
@@ -94,8 +94,9 @@ export function BillingPage() {
       discount: item.discount,
       discountType: item.discountType
     }));
+    const finalCustomerName = customerName.trim() === '' ? 'Walk-in Customer' : customerName;
     const newInvoice = {
-      customer: { name: customerName, phone: customerPhone },
+      customer: { name: finalCustomerName, phone: customerPhone },
       items: invoiceItems,
       subTotal,
       totalDiscount,
@@ -159,7 +160,7 @@ export function BillingPage() {
               <CardTitle>Current Bill</CardTitle>
             </CardHeader>
             <div className="px-6 pb-4 space-y-3">
-              <Input placeholder="Customer Name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+              <Input placeholder="Customer Name (default: Walk-in)" value={customerName} onChange={e => setCustomerName(e.target.value)} />
               <Input placeholder="Customer Phone (Optional)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
             </div>
             <ScrollArea className="flex-1">
