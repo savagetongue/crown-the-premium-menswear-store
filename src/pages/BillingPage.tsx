@@ -34,14 +34,13 @@ export function BillingPage() {
     queryFn: () => api('/api/settings'),
   });
   const sendInvoiceMutation = useMutation({
-    mutationFn: (invoiceId: string) => api<Invoice>(`/api/invoices/${invoiceId}/send`, { method: 'POST' }),
+    mutationFn: (invoice: Invoice) => api<Invoice>(`/api/invoices/${invoice.id}/send`, { method: 'POST' }),
     onSuccess: (data) => {
       toast.success(`Invoice #${data.invoiceNumber} sent to customer!`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
-    onError: (error, variables, context) => {
-      const invoice = context as Invoice | undefined;
-      toast.error(`Failed to send invoice #${invoice?.invoiceNumber || ''}. Please resend manually.`);
+    onError: (error, invoice) => {
+      toast.error(`Failed to send invoice #${invoice.invoiceNumber}. Please resend manually.`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
   });
@@ -57,7 +56,7 @@ export function BillingPage() {
       setBillDiscount(0);
       if (data.customer.phone) {
         toast.info(`Sending invoice to ${data.customer.phone}...`);
-        sendInvoiceMutation.mutate(data.id, { context: data });
+        sendInvoiceMutation.mutate(data);
       }
     },
     onError: (error) => {

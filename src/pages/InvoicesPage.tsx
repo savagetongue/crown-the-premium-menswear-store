@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +13,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { InvoiceDetailSheet } from '@/components/invoice/InvoiceDetailSheet';
 import { generateInvoicePdf } from '@/lib/pdf-generator';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
 export function InvoicesPage() {
   const queryClient = useQueryClient();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['invoices'],
     queryFn: () => api('/api/invoices'),
@@ -24,6 +26,18 @@ export function InvoicesPage() {
     queryKey: ['settings'],
     queryFn: () => api('/api/settings'),
   });
+  useEffect(() => {
+    const viewInvoiceId = searchParams.get('view');
+    if (viewInvoiceId && invoices) {
+      const invoiceToView = invoices.find(inv => inv.id === viewInvoiceId);
+      if (invoiceToView) {
+        setSelectedInvoice(invoiceToView);
+        // Clean up URL parameter after opening
+        searchParams.delete('view');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [invoices, searchParams, setSearchParams]);
   const sendInvoiceMutation = useMutation({
     mutationFn: (invoiceId: string) => api<Invoice>(`/api/invoices/${invoiceId}/send`, { method: 'POST' }),
     onSuccess: (data) => {
