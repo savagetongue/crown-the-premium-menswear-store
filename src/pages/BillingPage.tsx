@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { PlusCircle, MinusCircle, Trash2, Search, Tag, Edit } from 'lucide-react';
+import { PlusCircle, MinusCircle, Trash2, Search, Edit } from 'lucide-react';
 import { useCartStore, CartItem } from '@/hooks/useCartStore';
 import { Product, Invoice, InvoiceItem, StoreSettings } from '@shared/types';
 import { toast } from 'sonner';
@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 export function BillingPage() {
@@ -33,6 +33,18 @@ export function BillingPage() {
     queryKey: ['settings'],
     queryFn: () => api('/api/settings'),
   });
+  const sendInvoiceMutation = useMutation({
+    mutationFn: (invoiceId: string) => api<Invoice>(`/api/invoices/${invoiceId}/send`, { method: 'POST' }),
+    onSuccess: (data) => {
+      toast.success(`Invoice #${data.invoiceNumber} sent to customer!`);
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+    onError: (error, variables, context) => {
+      const invoice = context as Invoice | undefined;
+      toast.error(`Failed to send invoice #${invoice?.invoiceNumber || ''}. Please resend manually.`);
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
   const createInvoiceMutation = useMutation({
     mutationFn: (newInvoice: Omit<Invoice, 'id' | 'invoiceNumber' | 'date' | 'status' | 'amountInWords' | 'rounding'>) => api<Invoice>('/api/invoices', { method: 'POST', body: JSON.stringify(newInvoice) }),
     onSuccess: (data) => {
@@ -43,6 +55,10 @@ export function BillingPage() {
       setCustomerName('Walk-in Customer');
       setCustomerPhone('');
       setBillDiscount(0);
+      if (data.customer.phone) {
+        toast.info(`Sending invoice to ${data.customer.phone}...`);
+        sendInvoiceMutation.mutate(data.id, { context: data });
+      }
     },
     onError: (error) => {
       toast.error(`Failed to create invoice: ${error.message}`);
@@ -61,9 +77,9 @@ export function BillingPage() {
     const billDiscountAmount = billDiscountType === 'percentage' ? (subTotal - itemDiscounts) * (billDiscount / 100) : billDiscount;
     const totalDiscount = itemDiscounts + billDiscountAmount;
     const taxableAmount = subTotal - totalDiscount;
-    const tax = taxableAmount * ((settings?.taxRate || 0) / 100);
-    const grandTotal = taxableAmount + tax;
-    return { subTotal, totalDiscount, tax, grandTotal };
+    const taxAmount = taxableAmount * ((settings?.taxRate || 0) / 100);
+    const finalTotal = taxableAmount + taxAmount;
+    return { subTotal, totalDiscount, tax: taxAmount, grandTotal: finalTotal };
   }, [items, billDiscount, billDiscountType, settings]);
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   const handleFinalizeBill = () => {
@@ -159,7 +175,7 @@ export function BillingPage() {
                           <p className="text-sm text-muted-foreground">₹{item.price.toFixed(2)}</p>
                           {item.discount > 0 && (
                             <p className="text-xs text-green-600">
-                              -₹{item.discountType === 'fixed' ? item.discount.toFixed(2) : `${item.discount}%`} discount
+                              -₹{item.discountType === 'fixed' ? item.discount.toFixed(2) : `${(item.price * item.quantity * item.discount / 100).toFixed(2)} (${item.discount}%)`}
                             </p>
                           )}
                         </div>
@@ -186,7 +202,7 @@ export function BillingPage() {
                   </div>
                   <div className="flex justify-between"><span>Tax ({settings?.taxRate || 0}%)</span><span className="font-medium">₹{tax.toFixed(2)}</span></div>
                   <Separator className="my-2" />
-                  <div className="flex justify-between font-bold text-lg"><span>Total</span><span>₹{grandTotal.toFixed(2)}</span></div>
+                  <div className="flex justify-between font-bold text-lg"><span>Total</span><span>₹{Math.round(grandTotal).toFixed(2)}</span></div>
                 </div>
                 <Button className="w-full mt-4" size="lg" onClick={handleFinalizeBill} disabled={createInvoiceMutation.isPending}>
                   {createInvoiceMutation.isPending ? 'Processing...' : 'Finalize Bill'}

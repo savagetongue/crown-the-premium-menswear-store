@@ -99,6 +99,6 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   doc.setFontSize(10);
   doc.setFont('helvetica', 'italic');
   doc.text(`Thank you for shopping with ${settings.name}!`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
-  doc.text('Built with ❤��� at Cloudflare', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
+  doc.text('Built with ❤ at Cloudflare', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
   doc.save(`Invoice-${invoice.invoiceNumber}.pdf`);
 }
