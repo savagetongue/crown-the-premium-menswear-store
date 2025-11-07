@@ -20,11 +20,18 @@ const navItems = [
 ];
 export function AppSidebar({
   onLinkClick,
+  className,
 }: {
   onLinkClick?: () => void;
+  className?: string;
 }): JSX.Element {
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-background sm:flex">
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-background sm:flex",
+        className
+      )}
+    >
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <NavLink to="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
