@@ -1,6 +1,6 @@
 # CROWN – The Premium Menswear Store
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/savagetongue/crown-the-premium-menswear-store)
 
 A sophisticated, production-grade Point of Sale (POS) and store management system designed for a premium menswear boutique. It provides a visually stunning and intuitive interface for managing inventory, processing sales, generating professional PDF invoices, and automatically delivering them to customers via WhatsApp and SMS.
 
@@ -93,7 +93,7 @@ This project is designed for seamless deployment to the Cloudflare network.
 
 Alternatively, you can deploy directly from your GitHub repository using the button below.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/savagetongue/crown-the-premium-menswear-store)
 
 ## License
 
