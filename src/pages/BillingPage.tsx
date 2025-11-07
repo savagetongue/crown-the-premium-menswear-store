@@ -118,11 +118,8 @@ export function BillingPage() {
   };
   return (
     <div className="h-full flex flex-col">
-      <header className="flex items-center justify-between px-6 py-4 border-b">
-        <h1 className="text-2xl font-bold">Billing / POS</h1>
-      </header>
-      <div className="flex-1 grid md:grid-cols-3 gap-6 p-6 overflow-hidden">
-        <div className="md:col-span-2 flex flex-col h-full">
+      <div className="flex-1 grid lg:grid-cols-3 gap-6 overflow-hidden">
+        <div className="lg:col-span-2 flex flex-col h-full">
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
@@ -132,7 +129,7 @@ export function BillingPage() {
               onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
           <ScrollArea className="flex-1 pr-4 -mr-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {isLoadingProducts ?
                 Array.from({ length: 10 }).map((_, i) =>
                   <Card key={i}><CardContent className="p-4"><Skeleton className="w-16 h-16 rounded-md mb-2" /><Skeleton className="h-4 w-full mb-1" /><Skeleton className="h-3 w-1/2" /></CardContent></Card>
@@ -156,7 +153,7 @@ export function BillingPage() {
             </div>
           </ScrollArea>
         </div>
-        <div className="md:col-span-1 flex flex-col h-full bg-muted/20 rounded-lg">
+        <div className="lg:col-span-1 flex flex-col h-full bg-muted/20 rounded-lg">
           <Card className="flex-1 flex flex-col">
             <CardHeader>
               <CardTitle>Current Bill</CardTitle>

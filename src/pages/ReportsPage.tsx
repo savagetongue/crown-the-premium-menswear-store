@@ -24,7 +24,7 @@ function GeneralReportTab() {
   });
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -53,7 +53,7 @@ function GeneralReportTab() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-8 lg:grid-cols-5">
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader><CardTitle>Monthly Sales Performance</CardTitle></CardHeader>
           <CardContent>
@@ -74,22 +74,24 @@ function GeneralReportTab() {
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle>Top Selling Products</CardTitle></CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader><TableRow><TableHead>Product</TableHead><TableHead className="text-right">Units Sold</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {isLoadingTopSelling ? Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto" /></TableCell>
-                  </TableRow>
-                )) : topSelling?.slice(0, 5).map(p => (
-                  <TableRow key={p.productId}>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="text-right">{p.unitsSold}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="relative w-full overflow-auto">
+              <Table>
+                <TableHeader><TableRow><TableHead>Product</TableHead><TableHead className="text-right">Units Sold</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {isLoadingTopSelling ? Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto" /></TableCell>
+                    </TableRow>
+                  )) : topSelling?.slice(0, 5).map(p => (
+                    <TableRow key={p.productId}>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="text-right">{p.unitsSold}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -110,35 +112,37 @@ function InventoryReportTab({ type }: { type: 'low-stock' | 'dead-stock' }) {
         <p className="text-sm text-muted-foreground">{description}</p>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead className="text-right">Quantity</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {isLoading ? Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>
-                <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto" /></TableCell>
-              </TableRow>
-            )) : products?.length === 0 ? (
-              <TableRow><TableCell colSpan={3} className="h-24 text-center">No products found.</TableCell></TableRow>
-            ) : products?.map(p => (
-              <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.name}</TableCell>
-                <TableCell>{p.sku}</TableCell>
-                <TableCell className="text-right">
-                  <Badge variant={p.quantity > 0 ? 'secondary' : 'destructive'}>{p.quantity}</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="relative w-full overflow-auto">
+          <Table>
+            <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead className="text-right">Quantity</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {isLoading ? Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                  <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto" /></TableCell>
+                </TableRow>
+              )) : products?.length === 0 ? (
+                <TableRow><TableCell colSpan={3} className="h-24 text-center">No products found.</TableCell></TableRow>
+              ) : products?.map(p => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableCell>{p.sku}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant={p.quantity > 0 ? 'secondary' : 'destructive'}>{p.quantity}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
 }
 export function ReportsPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto">
       <div className="py-8 md:py-10 lg:py-12">
         <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Reports & Analytics</h1>
         <Tabs defaultValue="general">

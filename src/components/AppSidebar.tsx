@@ -10,12 +10,6 @@ import {
   Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/billing", icon: ShoppingCart, label: "Billing" },
@@ -30,15 +24,15 @@ export function AppSidebar({
   onLinkClick?: () => void;
 }): JSX.Element {
   return (
-    <aside className="w-64 flex-col bg-muted/40 hidden sm:flex">
+    <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-background sm:flex">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <NavLink to="/" className="flex items-center gap-2 font-semibold">
+          <NavLink to="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
             <Crown className="h-6 w-6 text-amber-500" />
             <span className="">CROWN</span>
           </NavLink>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             {navItems.map((item) => (
               <NavLink
@@ -59,7 +53,9 @@ export function AppSidebar({
           </nav>
         </div>
         <div className="mt-auto p-4">
-          {/* Footer content can go here */}
+          <div className="text-xs text-muted-foreground text-center">
+            Built with ��️ at Cloudflare
+          </div>
         </div>
       </div>
     </aside>

@@ -91,7 +91,7 @@ export function InvoicesPage() {
   };
   return (
     <>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         <div className="py-8 md:py-10 lg:py-12">
           <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Invoices</h1>
           <Card>
@@ -99,77 +99,79 @@ export function InvoicesPage() {
               <CardTitle>Recent Invoices</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Message</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : invoices?.length === 0 ? (
+              <div className="relative w-full overflow-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        No invoices found.
-                      </TableCell>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Message</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
-                  ) : (
-                    invoices?.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                        <TableCell>{format(new Date(invoice.date), 'PPP')}</TableCell>
-                        <TableCell>{invoice.customer.name}</TableCell>
-                        <TableCell>
-                          <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
-                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{renderMessagingStatus(invoice.messagingStatus)}</TableCell>
-                        <TableCell className="text-right">₹{invoice.grandTotal.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>
-                                <Eye className="mr-2 h-4 w-4" /> View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDownloadPdf(invoice)}>
-                                <Download className="mr-2 h-4 w-4" /> Download PDF
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleResendInvoice(invoice)} disabled={sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id}>
-                                <Send className="mr-2 h-4 w-4" />
-                                {sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id ? 'Sending...' : 'Resend Invoice'}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                          <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                          <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : invoices?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">
+                          No invoices found.
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      invoices?.map((invoice) => (
+                        <TableRow key={invoice.id}>
+                          <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                          <TableCell>{format(new Date(invoice.date), 'PPP')}</TableCell>
+                          <TableCell>{invoice.customer.name}</TableCell>
+                          <TableCell>
+                            <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
+                              {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{renderMessagingStatus(invoice.messagingStatus)}</TableCell>
+                          <TableCell className="text-right">₹{invoice.grandTotal.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>
+                                  <Eye className="mr-2 h-4 w-4" /> View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDownloadPdf(invoice)}>
+                                  <Download className="mr-2 h-4 w-4" /> Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleResendInvoice(invoice)} disabled={sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  {sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id ? 'Sending...' : 'Resend Invoice'}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </div>

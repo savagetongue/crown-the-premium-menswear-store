@@ -23,10 +23,10 @@ export function HomePage() {
     { name: 'Accessories', value: 100 },
   ];
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto">
       <div className="py-8 md:py-10 lg:py-12">
         <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Dashboard</h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -68,7 +68,7 @@ export function HomePage() {
             </CardContent>
           </Card>
         </div>
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Sales Overview</CardTitle>
