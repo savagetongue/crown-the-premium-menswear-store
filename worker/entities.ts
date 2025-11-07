@@ -1,6 +1,7 @@
-import { IndexedEntity } from "./core-utils";
-import type { Product, Category, Invoice } from "@shared/types";
+import { Entity, IndexedEntity } from "./core-utils";
+import type { Product, Category, Invoice, StoreSettings } from "@shared/types";
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@shared/mock-data";
+import type { Env } from './core-utils';
 export class CategoryEntity extends IndexedEntity<Category> {
   static readonly entityName = "category";
   static readonly indexName = "categories";
@@ -36,5 +37,19 @@ export class InvoiceEntity extends IndexedEntity<Invoice> {
     grandTotal: 0,
     amountInWords: "",
     status: "pending",
+    messagingStatus: "pending",
   };
+}
+export class StoreSettingsEntity extends Entity<StoreSettings> {
+  static readonly entityName = "storesettings";
+  static readonly initialState: StoreSettings = {
+    id: 'singleton',
+    name: 'CROWN – The Premium Menswear',
+    address: '123 Fashion Street, Metro City, 12345',
+    phone: '+91 98765 43210',
+    taxRate: 18,
+  };
+  static get(env: Env): StoreSettingsEntity {
+    return new StoreSettingsEntity(env, 'singleton');
+  }
 }

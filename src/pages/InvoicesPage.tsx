@@ -4,25 +4,38 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Eye, Download, Send } from 'lucide-react';
+import { MoreHorizontal, Eye, Download, Send, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Invoice } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InvoiceDetailSheet } from '@/components/invoice/InvoiceDetailSheet';
 import { generateInvoicePdf } from '@/lib/pdf-generator';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 export function InvoicesPage() {
+  const queryClient = useQueryClient();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['invoices'],
     queryFn: () => api('/api/invoices'),
   });
-  const handleDownloadPdf = (invoice: Invoice) => {
+  const sendInvoiceMutation = useMutation({
+    mutationFn: (invoiceId: string) => api<Invoice>(`/api/invoices/${invoiceId}/send`, { method: 'POST' }),
+    onSuccess: (data) => {
+      toast.success(`Invoice #${data.invoiceNumber} sent successfully!`);
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+    onError: (error, variables) => {
+      toast.error(`Failed to send invoice. Please try again.`);
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
+  const handleDownloadPdf = async (invoice: Invoice) => {
     toast.info(`Generating PDF for invoice #${invoice.invoiceNumber}...`);
     try {
-      generateInvoicePdf(invoice);
+      await generateInvoicePdf(invoice);
       toast.success(`PDF for invoice #${invoice.invoiceNumber} downloaded.`);
     } catch (error) {
       toast.error('Failed to generate PDF.');
@@ -30,7 +43,19 @@ export function InvoicesPage() {
     }
   };
   const handleResendInvoice = (invoice: Invoice) => {
-    toast.info(`Resending invoice #${invoice.invoiceNumber}... (Mocked)`);
+    toast.info(`Sending invoice #${invoice.invoiceNumber}...`);
+    sendInvoiceMutation.mutate(invoice.id);
+  };
+  const renderMessagingStatus = (status?: 'pending' | 'sent' | 'failed') => {
+    switch (status) {
+      case 'sent':
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"><CheckCircle className="mr-1 h-3 w-3" /> Sent</Badge>;
+      case 'failed':
+        return <Badge variant="destructive"><AlertCircle className="mr-1 h-3 w-3" /> Failed</Badge>;
+      case 'pending':
+      default:
+        return <Badge variant="secondary"><Clock className="mr-1 h-3 w-3" /> Pending</Badge>;
+    }
   };
   return (
     <>
@@ -49,6 +74,7 @@ export function InvoicesPage() {
                     <TableHead>Date</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Message</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead><span className="sr-only">Actions</span></TableHead>
                   </TableRow>
@@ -61,13 +87,14 @@ export function InvoicesPage() {
                         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                       </TableRow>
                     ))
                   ) : invoices?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
+                      <TableCell colSpan={7} className="h-24 text-center">
                         No invoices found.
                       </TableCell>
                     </TableRow>
@@ -82,6 +109,7 @@ export function InvoicesPage() {
                             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                           </Badge>
                         </TableCell>
+                        <TableCell>{renderMessagingStatus(invoice.messagingStatus)}</TableCell>
                         <TableCell className="text-right">₹{invoice.grandTotal.toFixed(2)}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -98,8 +126,9 @@ export function InvoicesPage() {
                               <DropdownMenuItem onClick={() => handleDownloadPdf(invoice)}>
                                 <Download className="mr-2 h-4 w-4" /> Download PDF
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleResendInvoice(invoice)}>
-                                <Send className="mr-2 h-4 w-4" /> Resend Invoice
+                              <DropdownMenuItem onClick={() => handleResendInvoice(invoice)} disabled={sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id}>
+                                <Send className="mr-2 h-4 w-4" /> 
+                                {sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id ? 'Sending...' : 'Send Invoice'}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

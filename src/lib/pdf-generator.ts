@@ -53,7 +53,7 @@ export async function generateInvoicePdf(invoice: Invoice) {
     headStyles: { fillColor: [23, 37, 84] }, // Deep Indigo
     styles: { fontSize: 9 },
   });
-  y = doc.autoTable.previous.finalY + 10;
+  y = (doc as any).autoTable.previous.finalY + 10;
   // Totals Section
   const totals = [
     ['Subtotal', `₹${invoice.subTotal.toFixed(2)}`],
@@ -70,7 +70,7 @@ export async function generateInvoicePdf(invoice: Invoice) {
     tableWidth: 60,
     margin: { left: 135 },
   });
-  y = doc.autoTable.previous.finalY;
+  y = (doc as any).autoTable.previous.finalY;
   doc.setLineWidth(0.5);
   doc.line(135, y + 2, 195, y + 2);
   y += 8;

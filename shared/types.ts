@@ -43,6 +43,7 @@ export interface Invoice {
   grandTotal: number;
   amountInWords: string;
   status: 'paid' | 'pending' | 'cancelled';
+  messagingStatus?: 'pending' | 'sent' | 'failed';
 }
 export interface StoreSettings {
   id: 'singleton';

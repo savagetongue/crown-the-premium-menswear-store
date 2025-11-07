@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { CategoryEntity, ProductEntity, InvoiceEntity } from "./entities";
-import { ok, bad, notFound, isStr } from './core-utils';
-import type { Invoice, Product } from "@shared/types";
+import { CategoryEntity, ProductEntity, InvoiceEntity, StoreSettingsEntity } from "./entities";
+import { ok, bad, notFound } from './core-utils';
+import type { Invoice, Product, StoreSettings } from "@shared/types";
 // This is a simplified version of the amountToWords function for the backend.
 // In a real-world scenario, this would be a shared utility.
 function amountToWords(amount: number): string {
@@ -128,8 +128,36 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       grandTotal: roundedTotal,
       rounding: rounding,
       amountInWords: amountToWords(roundedTotal),
+      messagingStatus: 'pending',
     };
     const created = await InvoiceEntity.create(c.env, newInvoice);
     return ok(c, created);
+  });
+  app.post('/api/invoices/:id/send', async (c) => {
+    const { id } = c.req.param();
+    const invoiceEntity = new InvoiceEntity(c.env, id);
+    if (!(await invoiceEntity.exists())) {
+      return notFound(c, 'Invoice not found');
+    }
+    // Mock sending logic
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+    const isSuccess = Math.random() > 0.2; // 80% success rate
+    const updatedInvoice = await invoiceEntity.mutate(invoice => ({
+      ...invoice,
+      messagingStatus: isSuccess ? 'sent' : 'failed',
+    }));
+    return ok(c, updatedInvoice);
+  });
+  // SETTINGS
+  app.get('/api/settings', async (c) => {
+    const settings = await StoreSettingsEntity.get(c.env).getState();
+    return ok(c, settings);
+  });
+  app.post('/api/settings', async (c) => {
+    const settingsData = await c.req.json<Partial<StoreSettings>>();
+    const settingsEntity = StoreSettingsEntity.get(c.env);
+    await settingsEntity.patch(settingsData);
+    const updatedSettings = await settingsEntity.getState();
+    return ok(c, updatedSettings);
   });
 }
