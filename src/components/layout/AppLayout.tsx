@@ -6,12 +6,16 @@ import { ThemeToggle } from "../ThemeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, Crown } from "lucide-react";
+
 export function AppLayout(): JSX.Element {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <AppSidebar className="hidden sm:flex" />
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-64">
+
+      {/* increased left padding on sm+ so content clears the sidebar;
+          reduced gaps/padding to tighten vertical spacing site-wide */}
+      <div className="flex flex-col sm:gap-3 sm:py-3 sm:pl-72 sm:pr-6">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -27,20 +31,28 @@ export function AppLayout(): JSX.Element {
               />
             </SheetContent>
           </Sheet>
+
           <div className="flex items-center gap-2 sm:hidden">
-             <NavLink to="/" className="flex items-center gap-2 font-semibold">
-                <Crown className="h-6 w-6 text-amber-500" />
-                <span className="">CROWN</span>
-              </NavLink>
+            <NavLink to="/" className="flex items-center gap-2 font-semibold">
+              <Crown className="h-6 w-6 text-amber-500" />
+              <span className="">CROWN</span>
+            </NavLink>
           </div>
+
           <div className="ml-auto">
             <ThemeToggle className="static" />
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 sm:p-0">
-          <Outlet />
+
+        {/* global content container: smaller padding + space-y to reduce vertical gaps.
+            The inner wrapper limits content width so there is consistent breathing room. */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <div className="max-w-[1200px] w-full mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
+
       <Toaster richColors closeButton />
     </div>
   );
