@@ -53,3 +53,14 @@ export interface StoreSettings {
   phone?: string;
   taxRate: number; // percentage
 }
+// Reporting Types
+export interface ReportSummary {
+  totalRevenue: number;
+  totalSales: number;
+  lowStockItems: number;
+  newCustomers: number;
+}
+export interface SalesOverTime {
+  name: string; // e.g., 'Jan', 'Feb'
+  sales: number;
+}

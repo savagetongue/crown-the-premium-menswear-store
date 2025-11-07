@@ -68,6 +68,7 @@ export function SettingsPage() {
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
                   </div>
                 ) : (
                   <>
@@ -105,6 +106,19 @@ export function SettingsPage() {
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
                             <Input placeholder="e.g., +91 98765 43210" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="taxRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tax Rate (%)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="e.g., 18" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

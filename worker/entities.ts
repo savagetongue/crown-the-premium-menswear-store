@@ -1,12 +1,10 @@
 import { Entity, IndexedEntity } from "./core-utils";
 import type { Product, Category, Invoice, StoreSettings } from "@shared/types";
-import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@shared/mock-data";
 import type { Env } from './core-utils';
 export class CategoryEntity extends IndexedEntity<Category> {
   static readonly entityName = "category";
   static readonly indexName = "categories";
   static readonly initialState: Category = { id: "", name: "" };
-  static seedData = MOCK_CATEGORIES;
 }
 export class ProductEntity extends IndexedEntity<Product> {
   static readonly entityName = "product";
@@ -19,7 +17,6 @@ export class ProductEntity extends IndexedEntity<Product> {
     quantity: 0,
     categoryId: "",
   };
-  static seedData = MOCK_PRODUCTS;
 }
 export class InvoiceEntity extends IndexedEntity<Invoice> {
   static readonly entityName = "invoice";

@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { CategoryEntity, ProductEntity, InvoiceEntity, StoreSettingsEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
-import type { Invoice, Product, StoreSettings } from "@shared/types";
+import type { Invoice, Product, StoreSettings, Category, SalesOverTime } from "@shared/types";
+import { format } from 'date-fns';
 // This is a simplified version of the amountToWords function for the backend.
 // In a real-world scenario, this would be a shared utility.
 function amountToWords(amount: number): string {
@@ -44,18 +45,31 @@ function amountToWords(amount: number): string {
   }
 }
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
-  // Ensure seed data is present
-  app.use('/api/*', async (c, next) => {
-    await Promise.all([
-      CategoryEntity.ensureSeed(c.env),
-      ProductEntity.ensureSeed(c.env),
-    ]);
-    await next();
-  });
   // CATEGORIES
   app.get('/api/categories', async (c) => {
     const { items } = await CategoryEntity.list(c.env);
     return ok(c, items);
+  });
+  app.post('/api/categories', async (c) => {
+    const { name } = await c.req.json<{ name: string }>();
+    if (!name) return bad(c, 'Category name is required');
+    const newCategory: Category = { id: crypto.randomUUID(), name };
+    const created = await CategoryEntity.create(c.env, newCategory);
+    return ok(c, created);
+  });
+  app.put('/api/categories/:id', async (c) => {
+    const { id } = c.req.param();
+    const { name } = await c.req.json<{ name: string }>();
+    const category = new CategoryEntity(c.env, id);
+    if (!(await category.exists())) return notFound(c, 'Category not found');
+    await category.patch({ name });
+    return ok(c, await category.getState());
+  });
+  app.delete('/api/categories/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await CategoryEntity.delete(c.env, id);
+    if (!deleted) return notFound(c, 'Category not found');
+    return ok(c, { id });
   });
   // PRODUCTS
   app.get('/api/products', async (c) => {
@@ -92,7 +106,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // INVOICES
   app.get('/api/invoices', async (c) => {
     const { items } = await InvoiceEntity.list(c.env);
-    // Sort by date descending
     items.sort((a, b) => b.date - a.date);
     return ok(c, items);
   });
@@ -101,7 +114,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!invoiceData.customer || !invoiceData.items || invoiceData.items.length === 0) {
       return bad(c, 'Invalid invoice data');
     }
-    // Server-side stock validation and deduction
     for (const item of invoiceData.items) {
       const product = new ProductEntity(c.env, item.productId);
       const productState = await product.getState();
@@ -109,7 +121,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
         return bad(c, `Not enough stock for ${item.productName}. Available: ${productState?.quantity || 0}`);
       }
     }
-    // All items have sufficient stock, now deduct
     for (const item of invoiceData.items) {
       const product = new ProductEntity(c.env, item.productId);
       await product.mutate(p => ({ ...p, quantity: p.quantity - item.quantity }));
@@ -139,9 +150,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!(await invoiceEntity.exists())) {
       return notFound(c, 'Invoice not found');
     }
-    // Mock sending logic
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-    const isSuccess = Math.random() > 0.2; // 80% success rate
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const isSuccess = Math.random() > 0.2;
     const updatedInvoice = await invoiceEntity.mutate(invoice => ({
       ...invoice,
       messagingStatus: isSuccess ? 'sent' : 'failed',
@@ -159,5 +169,30 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     await settingsEntity.patch(settingsData);
     const updatedSettings = await settingsEntity.getState();
     return ok(c, updatedSettings);
+  });
+  // REPORTS
+  app.get('/api/reports/summary', async (c) => {
+    const { items: invoices } = await InvoiceEntity.list(c.env);
+    const { items: products } = await ProductEntity.list(c.env);
+    const totalRevenue = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
+    const totalSales = invoices.reduce((sum, inv) => sum + inv.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+    const lowStockItems = products.filter(p => p.quantity < 10).length;
+    const uniqueCustomers = new Set(invoices.map(inv => inv.customer.phone)).size;
+    return ok(c, {
+      totalRevenue,
+      totalSales,
+      lowStockItems,
+      newCustomers: uniqueCustomers,
+    });
+  });
+  app.get('/api/reports/sales-over-time', async (c) => {
+    const { items: invoices } = await InvoiceEntity.list(c.env);
+    const salesByMonth: { [key: string]: number } = {};
+    invoices.forEach(inv => {
+      const month = format(new Date(inv.date), 'MMM');
+      salesByMonth[month] = (salesByMonth[month] || 0) + inv.grandTotal;
+    });
+    const salesData: SalesOverTime[] = Object.entries(salesByMonth).map(([name, sales]) => ({ name, sales }));
+    return ok(c, salesData);
   });
 }

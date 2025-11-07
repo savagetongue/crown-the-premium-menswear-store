@@ -2,22 +2,26 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, Users, ShoppingBag, Package } from 'lucide-react';
-const salesData = [
-  { name: 'Jan', sales: 4000 },
-  { name: 'Feb', sales: 3000 },
-  { name: 'Mar', sales: 5000 },
-  { name: 'Apr', sales: 4500 },
-  { name: 'May', sales: 6000 },
-  { name: 'Jun', sales: 5500 },
-];
-const categoryData = [
-  { name: 'Shirts', value: 400 },
-  { name: 'Trousers', value: 300 },
-  { name: 'Jackets', value: 200 },
-  { name: 'Accessories', value: 100 },
-];
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { ReportSummary, SalesOverTime } from '@shared/types';
+import { Skeleton } from '@/components/ui/skeleton';
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 export function HomePage() {
+  const { data: summary, isLoading: isLoadingSummary } = useQuery<ReportSummary>({
+    queryKey: ['reportSummary'],
+    queryFn: () => api('/api/reports/summary'),
+  });
+  const { data: salesData, isLoading: isLoadingSales } = useQuery<SalesOverTime[]>({
+    queryKey: ['salesOverTime'],
+    queryFn: () => api('/api/reports/sales-over-time'),
+  });
+  const categoryData = [
+    { name: 'Shirts', value: 400 },
+    { name: 'Trousers', value: 300 },
+    { name: 'Jackets', value: 200 },
+    { name: 'Accessories', value: 100 },
+  ];
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
@@ -29,7 +33,7 @@ export function HomePage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹4,52,318.89</div>
+              {isLoadingSummary ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">₹{summary?.totalRevenue.toFixed(2)}</div>}
               <p className="text-xs text-muted-foreground">+20.1% from last month</p>
             </CardContent>
           </Card>
@@ -39,7 +43,7 @@ export function HomePage() {
               <ShoppingBag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12,234</div>
+              {isLoadingSummary ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">+{summary?.totalSales}</div>}
               <p className="text-xs text-muted-foreground">+19% from last month</p>
             </CardContent>
           </Card>
@@ -49,7 +53,7 @@ export function HomePage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+235</div>
+              {isLoadingSummary ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">+{summary?.newCustomers}</div>}
               <p className="text-xs text-muted-foreground">+180.1% from last month</p>
             </CardContent>
           </Card>
@@ -59,7 +63,7 @@ export function HomePage() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
+              {isLoadingSummary ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{summary?.lowStockItems}</div>}
               <p className="text-xs text-muted-foreground">Items below threshold</p>
             </CardContent>
           </Card>
@@ -70,6 +74,7 @@ export function HomePage() {
               <CardTitle>Sales Overview</CardTitle>
             </CardHeader>
             <CardContent>
+              {isLoadingSales ? <Skeleton className="h-[300px] w-full" /> :
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -80,6 +85,7 @@ export function HomePage() {
                   <Bar dataKey="sales" fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
+              }
             </CardContent>
           </Card>
           <Card>
