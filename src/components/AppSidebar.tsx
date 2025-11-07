@@ -24,9 +24,13 @@ const navItems = [
   { to: "/reports", icon: BarChart2, label: "Reports" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
-export function AppSidebar(): JSX.Element {
+export function AppSidebar({
+  onLinkClick,
+}: {
+  onLinkClick?: () => void;
+}): JSX.Element {
   return (
-    <aside className="w-64 flex-col border-r bg-muted/40 hidden md:flex">
+    <aside className="w-full flex-col bg-muted/40 flex">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <NavLink to="/" className="flex items-center gap-2 font-semibold">
@@ -40,6 +44,7 @@ export function AppSidebar(): JSX.Element {
               <NavLink
                 key={item.to}
                 to={item.to}
+                onClick={onLinkClick}
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",

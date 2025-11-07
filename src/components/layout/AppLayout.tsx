@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "../ThemeToggle";
+
 export function AppLayout(): JSX.Element {
   return (
     <div className="flex h-screen bg-background text-foreground">
