@@ -10,12 +10,12 @@ import { PanelLeft, Crown } from "lucide-react";
 export function AppLayout(): JSX.Element {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
+    <div className="min-h-screen w-full bg-muted/40">
+      {/* render sidebar (it may be fixed internally) */}
       <AppSidebar className="hidden sm:flex" />
 
-      {/* increased left padding on sm+ so content clears the sidebar;
-          reduced gaps/padding to tighten vertical spacing site-wide */}
-      <div className="flex flex-col sm:gap-3 sm:py-3 sm:pl-72 sm:pr-6">
+      {/* when sidebar is fixed, use left-margin; if sidebar is in-flow, ml-64 harmlessly shifts content */}
+      <div className="flex flex-col sm:ml-64">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -44,10 +44,9 @@ export function AppLayout(): JSX.Element {
           </div>
         </header>
 
-        {/* global content container: smaller padding + space-y to reduce vertical gaps.
-            The inner wrapper limits content width so there is consistent breathing room. */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          <div className="max-w-[1200px] w-full mx-auto">
+        {/* Main: tightened padding + space-y; wrapper centers and limits width */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="max-w-[1200px] w-full mx-auto space-y-4">
             <Outlet />
           </div>
         </main>
