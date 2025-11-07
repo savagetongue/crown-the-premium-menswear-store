@@ -40,7 +40,7 @@ interface ProductFormProps {
   isSubmitting: boolean;
 }
 export function ProductForm({ product, onSubmit, onCancel, isSubmitting }: ProductFormProps) {
-  const form = useForm<ProductFormData>({
+  const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: '',
@@ -85,7 +85,7 @@ export function ProductForm({ product, onSubmit, onCancel, isSubmitting }: Produ
   });
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
