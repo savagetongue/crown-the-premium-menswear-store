@@ -176,8 +176,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const { items: products } = await ProductEntity.list(c.env);
     const totalRevenue = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
     const totalSales = invoices.reduce((sum, inv) => sum + inv.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
-    const lowStockItems = products.filter(p => p.quantity < 10).length;
-    const uniqueCustomers = new Set(invoices.map(inv => inv.customer.phone)).size;
+    const lowStockItems = products.filter(p => p.quantity > 0 && p.quantity <= 10).length;
+    const uniqueCustomers = new Set(invoices.map(inv => inv.customer.phone).filter(Boolean)).size;
     return ok(c, {
       totalRevenue,
       totalSales,

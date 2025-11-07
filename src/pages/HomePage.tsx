@@ -64,7 +64,7 @@ export function HomePage() {
             </CardHeader>
             <CardContent>
               {isLoadingSummary ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{summary?.lowStockItems}</div>}
-              <p className="text-xs text-muted-foreground">Items below threshold</p>
+              <p className="text-xs text-muted-foreground">Items with 10 or less stock</p>
             </CardContent>
           </Card>
         </div>
