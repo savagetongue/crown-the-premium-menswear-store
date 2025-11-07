@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { PlusCircle, MinusCircle, Trash2, Search, Edit } from 'lucide-react';
+import { PlusCircle, MinusCircle, Trash2, Search, Edit, Tag } from 'lucide-react';
 import { useCartStore, CartItem } from '@/hooks/useCartStore';
 import { Product, Invoice, InvoiceItem, StoreSettings } from '@shared/types';
 import { toast } from 'sonner';
@@ -24,8 +24,10 @@ export function BillingPage() {
   const [billDiscount, setBillDiscount] = useState(0);
   const [billDiscountType, setBillDiscountType] = useState<'percentage' | 'fixed'>('fixed');
   const [isDiscountModalOpen, setDiscountModalOpen] = useState(false);
+  const [isPriceModalOpen, setPriceModalOpen] = useState(false);
   const [selectedItemForDiscount, setSelectedItemForDiscount] = useState<CartItem | null>(null);
-  const { items, addItem, removeItem, updateQuantity, clearCart, applyItemDiscount } = useCartStore();
+  const [selectedItemForPrice, setSelectedItemForPrice] = useState<CartItem | null>(null);
+  const { items, addItem, removeItem, updateQuantity, clearCart, applyItemDiscount, updatePrice } = useCartStore();
   const { data: products, isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: () => api('/api/products')
@@ -70,10 +72,10 @@ export function BillingPage() {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const { subTotal, totalDiscount, tax, grandTotal } = useMemo(() => {
-    const subTotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const subTotal = items.reduce((acc, item) => acc + item.originalPrice * item.quantity, 0);
     let itemDiscounts = items.reduce((acc, item) => {
-      const itemTotal = item.price * item.quantity;
-      const discountAmount = item.discountType === 'percentage' ? itemTotal * (item.discount / 100) : item.discount;
+      const itemTotal = item.originalPrice * item.quantity;
+      const discountAmount = item.discountType === 'percentage' ? itemTotal * (item.discount / 100) : item.discount * item.quantity;
       return acc + discountAmount;
     }, 0);
     const billDiscountAmount = billDiscountType === 'percentage' ? (subTotal - itemDiscounts) * (billDiscount / 100) : billDiscount;
@@ -94,6 +96,7 @@ export function BillingPage() {
       productName: item.name,
       quantity: item.quantity,
       price: item.price,
+      originalPrice: item.originalPrice,
       discount: item.discount,
       discountType: item.discountType
     }));
@@ -115,6 +118,16 @@ export function BillingPage() {
     const discountType = formData.get('discountType') as 'percentage' | 'fixed';
     applyItemDiscount(selectedItemForDiscount.id, discount, discountType);
     setSelectedItemForDiscount(null);
+  };
+  const handlePriceChangeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedItemForPrice) return;
+    const formData = new FormData(e.currentTarget);
+    const newPrice = parseFloat(formData.get('price') as string);
+    if (!isNaN(newPrice) && newPrice >= 0) {
+      updatePrice(selectedItemForPrice.id, newPrice);
+    }
+    setSelectedItemForPrice(null);
   };
   return (
     <div className="h-full flex flex-col">
@@ -171,15 +184,19 @@ export function BillingPage() {
                       <div key={item.id} className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-muted-foreground">₹{item.price.toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.price !== item.originalPrice && <span className="line-through mr-1">₹{item.originalPrice.toFixed(2)}</span>}
+                            ₹{item.price.toFixed(2)}
+                          </p>
                           {item.discount > 0 && (
                             <p className="text-xs text-green-600">
-                              -₹{item.discountType === 'fixed' ? item.discount.toFixed(2) : `${(item.price * item.quantity * item.discount / 100).toFixed(2)} (${item.discount}%)`}
+                              Discount: ₹{item.discountType === 'fixed' ? (item.discount * item.quantity).toFixed(2) : `${(item.originalPrice * item.quantity * item.discount / 100).toFixed(2)} (${item.discount}%)`}
                             </p>
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedItemForDiscount(item)}><Edit className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedItemForPrice(item)}><Edit className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedItemForDiscount(item)}><Tag className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, item.quantity - 1)}><MinusCircle className="h-4 w-4" /></Button>
                           <span className="font-bold w-6 text-center">{item.quantity}</span>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, item.quantity + 1)}><PlusCircle className="h-4 w-4" /></Button>
@@ -196,7 +213,7 @@ export function BillingPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between"><span>Subtotal ({totalItems} items)</span><span className="font-medium">₹{subTotal.toFixed(2)}</span></div>
                   <div className="flex justify-between">
-                    <Button variant="link" className="p-0 h-auto text-green-600" onClick={() => setDiscountModalOpen(true)}>Discount</Button>
+                    <Button variant="link" className="p-0 h-auto text-green-600" onClick={() => setDiscountModalOpen(true)}>Bill Discount</Button>
                     <span className="font-medium text-green-600">-₹{totalDiscount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between"><span>Tax ({settings?.taxRate || 0}%)</span><span className="font-medium">₹{tax.toFixed(2)}</span></div>
@@ -235,6 +252,22 @@ export function BillingPage() {
               <div className="flex items-center space-x-2"><RadioGroupItem value="percentage" id="item-percentage" /><Label htmlFor="item-percentage">Percentage (%)</Label></div>
             </RadioGroup>
             <DialogFooter><Button type="submit">Apply Discount</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!selectedItemForPrice} onOpenChange={(open) => !open && setSelectedItemForPrice(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Price for {selectedItemForPrice?.name}</DialogTitle></DialogHeader>
+          <form onSubmit={handlePriceChangeSubmit} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Original Price</Label>
+              <Input value={`₹${selectedItemForPrice?.originalPrice.toFixed(2)}`} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-price">New Price</Label>
+              <Input id="new-price" name="price" type="number" placeholder="Enter new price" defaultValue={selectedItemForPrice?.price || 0} />
+            </div>
+            <DialogFooter><Button type="submit">Update Price</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

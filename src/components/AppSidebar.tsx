@@ -59,11 +59,6 @@ export function AppSidebar({
             ))}
           </nav>
         </div>
-        <div className="mt-auto p-4">
-          <div className="text-xs text-muted-foreground text-center">
-            Built with ��️ at Cloudflare
-          </div>
-        </div>
       </div>
     </aside>
   );

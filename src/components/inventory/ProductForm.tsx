@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -64,12 +64,10 @@ export function ProductForm({ product, onSubmit, onCancel, isSubmitting }: Produ
           stockLocation: '',
         },
   });
-
-  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery<{ items: Category[] }>({
+  const { data: categories, isLoading: isLoadingCategories } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: () => api('/api/categories'),
   });
-  const categories = categoriesData?.items;
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

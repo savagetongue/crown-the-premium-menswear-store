@@ -26,7 +26,8 @@ export interface InvoiceItem {
   productId: string;
   productName: string;
   quantity: number;
-  price: number;
+  price: number; // This is the final price per item
+  originalPrice?: number; // The price before any modification in the cart
   discount: number;
   discountType: 'percentage' | 'fixed';
 }

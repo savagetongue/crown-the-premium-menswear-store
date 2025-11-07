@@ -38,21 +38,38 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   doc.text(`Bill To: ${invoice.customer.name}`, 15, y);
   y += 10;
   // Items Table
-  const tableData = invoice.items.map((item, index) => [
-    index + 1,
-    item.productName,
-    item.quantity,
-    `���${item.price.toFixed(2)}`,
-    item.discount > 0 ? (item.discountType === 'fixed' ? `-₹${item.discount.toFixed(2)}` : `-${item.discount}%`) : '-',
-    `₹${(item.price * item.quantity).toFixed(2)}`,
-  ]);
+  const tableData = invoice.items.map((item, index) => {
+    let itemName = item.productName;
+    let discountText = '-';
+    if (item.originalPrice && item.originalPrice !== item.price) {
+      itemName += `\n(Price modified from ₹${item.originalPrice.toFixed(2)})`;
+      const fixedDiscount = item.originalPrice - item.price;
+      const percentDiscount = (fixedDiscount / item.originalPrice) * 100;
+      discountText = `-₹${fixedDiscount.toFixed(2)} (${percentDiscount.toFixed(2)}%)`;
+    } else if (item.discount > 0) {
+      discountText = item.discountType === 'fixed' ? `-₹${item.discount.toFixed(2)}` : `-${item.discount}%`;
+    }
+    return [
+      index + 1,
+      itemName,
+      item.quantity,
+      `₹${item.price.toFixed(2)}`,
+      discountText,
+      `₹${(item.price * item.quantity).toFixed(2)}`,
+    ];
+  });
   doc.autoTable({
     startY: y,
     head: [['#', 'Item', 'Qty', 'Price', 'Discount', 'Total']],
     body: tableData,
     theme: 'striped',
     headStyles: { fillColor: [23, 37, 84] }, // Deep Indigo
-    styles: { fontSize: 9 },
+    styles: { fontSize: 9, cellPadding: 2 },
+    didParseCell: function (data) {
+        if (typeof data.cell.text === 'string' && data.cell.text.includes('\n')) {
+            data.cell.styles.valign = 'middle';
+        }
+    }
   });
   y = (doc as any).autoTable.previous.finalY + 10;
   // Totals Section
@@ -95,10 +112,9 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   });
   doc.addImage(qrCodeDataUrl, 'PNG', 15, y, 40, 40);
   // Footer
-  const footerY = pageHeight - 20;
+  const footerY = pageHeight - 15;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'italic');
   doc.text(`Thank you for shopping with ${settings.name}!`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
-  doc.text('Built with ❤ at Cloudflare', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
   doc.save(`Invoice-${invoice.invoiceNumber}.pdf`);
 }

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Invoice, StoreSettings } from '@shared/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -69,10 +69,6 @@ function InvoiceView({ invoice, settings }: { invoice: Invoice; settings: StoreS
           <p><span className="font-semibold">Amount in words:</span> {invoice.amountInWords}</p>
         </div>
       </CardContent>
-      <CardFooter className="flex-col items-center justify-center text-center text-xs text-muted-foreground py-4 border-t">
-        <p>Thank you for your business!</p>
-        <p>Built with ❤️ at Cloudflare</p>
-      </CardFooter>
     </Card>
   );
 }
@@ -110,7 +106,6 @@ export function PublicInvoicePage() {
             </div>
             <div className="flex justify-end"><div className="w-full max-w-xs space-y-2"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></div></div>
           </CardContent>
-          <CardFooter><Skeleton className="h-4 w-1/2 mx-auto" /></CardFooter>
         </Card>
       )}
       {error && (
