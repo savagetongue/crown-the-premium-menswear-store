@@ -3,6 +3,46 @@ import type { Env } from './core-utils';
 import { CategoryEntity, ProductEntity, InvoiceEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
 import type { Invoice, Product } from "@shared/types";
+// This is a simplified version of the amountToWords function for the backend.
+// In a real-world scenario, this would be a shared utility.
+function amountToWords(amount: number): string {
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+  const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const thousands = ['', 'Thousand', 'Lakh', 'Crore'];
+  function toWords(n: number): string {
+    if (n < 10) return ones[n];
+    if (n < 20) return teens[n - 10];
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + ones[n % 10] : '');
+    if (n < 1000) return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + toWords(n % 100) : '');
+    return '';
+  }
+  if (amount === 0) return 'Zero';
+  let words = '';
+  let num = Math.floor(amount);
+  let i = 0;
+  while (num > 0) {
+    let chunk;
+    if (i === 0) {
+      chunk = num % 1000;
+      num = Math.floor(num / 1000);
+    } else {
+      chunk = num % 100;
+      num = Math.floor(num / 100);
+    }
+    if (chunk > 0) {
+      words = toWords(chunk) + ' ' + thousands[i] + ' ' + words;
+    }
+    i++;
+  }
+  const rupees = words.trim();
+  const paise = Math.round((amount - Math.floor(amount)) * 100);
+  if (paise > 0) {
+    return `${rupees} Rupees and ${toWords(paise)} Paise Only`;
+  } else {
+    return `${rupees} Rupees Only`;
+  }
+}
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // Ensure seed data is present
   app.use('/api/*', async (c, next) => {
@@ -76,14 +116,18 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }
     const allInvoices = (await InvoiceEntity.list(c.env)).items;
     const nextInvoiceNumber = `INV-2024-${(allInvoices.length + 1).toString().padStart(4, '0')}`;
+    const grandTotal = invoiceData.grandTotal;
+    const roundedTotal = Math.round(grandTotal);
+    const rounding = roundedTotal - grandTotal;
     const newInvoice: Invoice = {
       ...invoiceData,
       id: crypto.randomUUID(),
       invoiceNumber: nextInvoiceNumber,
       date: Date.now(),
       status: 'paid',
-      rounding: 0, // Placeholder
-      amountInWords: '', // Placeholder
+      grandTotal: roundedTotal,
+      rounding: rounding,
+      amountInWords: amountToWords(roundedTotal),
     };
     const created = await InvoiceEntity.create(c.env, newInvoice);
     return ok(c, created);

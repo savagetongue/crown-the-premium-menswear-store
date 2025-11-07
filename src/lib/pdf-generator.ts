@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Invoice, StoreSettings } from '@shared/types';
+import { Invoice } from '@shared/types';
 import { format } from 'date-fns';
 import { amountToWords } from './utils';
 import QRCode from 'qrcode';
@@ -8,22 +8,21 @@ import QRCode from 'qrcode';
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
-export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettings) {
+export async function generateInvoicePdf(invoice: Invoice) {
   const doc = new jsPDF() as jsPDFWithAutoTable;
   const pageHeight = doc.internal.pageSize.height;
-  const pageWidth = doc.internal.pageSize.width;
-  let y = 20;
-  // Store Info - Centered
-  doc.setFontSize(22);
+  let y = 15;
+  // Store Info
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text(settings.name, pageWidth / 2, y, { align: 'center' });
+  doc.text('CROWN - The Premium Menswear', 15, y);
   y += 8;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(settings.address, pageWidth / 2, y, { align: 'center' });
+  doc.text('123 Fashion Street, Metro City, 12345', 15, y);
   y += 5;
-  doc.text(`Phone: ${settings.phone || 'N/A'}`, pageWidth / 2, y, { align: 'center' });
-  y += 12;
+  doc.text('Phone: +91 98765 43210', 15, y);
+  y += 10;
   // Invoice Info
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -36,42 +35,25 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   y += 6;
   // Customer Info
   doc.text(`Bill To: ${invoice.customer.name}`, 15, y);
+  doc.text(`Phone: ${invoice.customer.phone || 'N/A'}`, 140, y);
   y += 10;
   // Items Table
-  const tableData = invoice.items.map((item, index) => {
-    let itemName = item.productName;
-    let discountText = '-';
-    if (item.originalPrice && item.originalPrice !== item.price) {
-      itemName += `\n(Price modified from ₹${item.originalPrice.toFixed(2)})`;
-      const fixedDiscount = item.originalPrice - item.price;
-      const percentDiscount = (fixedDiscount / item.originalPrice) * 100;
-      discountText = `-₹${fixedDiscount.toFixed(2)} (${percentDiscount.toFixed(2)}%)`;
-    } else if (item.discount > 0) {
-      discountText = item.discountType === 'fixed' ? `-₹${item.discount.toFixed(2)}` : `-${item.discount}%`;
-    }
-    return [
-      index + 1,
-      itemName,
-      item.quantity,
-      `₹${item.price.toFixed(2)}`,
-      discountText,
-      `₹${(item.price * item.quantity).toFixed(2)}`,
-    ];
-  });
+  const tableData = invoice.items.map((item, index) => [
+    index + 1,
+    item.productName,
+    item.quantity,
+    `₹${item.price.toFixed(2)}`,
+    `₹${(item.price * item.quantity).toFixed(2)}`,
+  ]);
   doc.autoTable({
     startY: y,
-    head: [['#', 'Item', 'Qty', 'Price', 'Discount', 'Total']],
+    head: [['#', 'Item Description', 'Qty', 'Unit Price', 'Total']],
     body: tableData,
     theme: 'striped',
     headStyles: { fillColor: [23, 37, 84] }, // Deep Indigo
-    styles: { fontSize: 9, cellPadding: 2 },
-    didParseCell: function (data) {
-        if (typeof data.cell.text === 'string' && data.cell.text.includes('\n')) {
-            data.cell.styles.valign = 'middle';
-        }
-    }
+    styles: { fontSize: 9 },
   });
-  y = (doc as any).autoTable.previous.finalY + 10;
+  y = doc.autoTable.previous.finalY + 10;
   // Totals Section
   const totals = [
     ['Subtotal', `₹${invoice.subTotal.toFixed(2)}`],
@@ -88,7 +70,7 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
     tableWidth: 60,
     margin: { left: 135 },
   });
-  y = (doc as any).autoTable.previous.finalY;
+  y = doc.autoTable.previous.finalY;
   doc.setLineWidth(0.5);
   doc.line(135, y + 2, 195, y + 2);
   y += 8;
@@ -105,16 +87,16 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   doc.text(splitText, 15, y);
   y += splitText.length * 4 + 5;
   // QR Code
-  const invoiceUrl = `${window.location.origin}/invoice/${invoice.id}`;
-  const qrCodeDataUrl = await QRCode.toDataURL(invoiceUrl, {
+  const qrCodeDataUrl = await QRCode.toDataURL(`https://example.com/invoice/${invoice.id}`, {
     errorCorrectionLevel: 'H',
     width: 40,
   });
   doc.addImage(qrCodeDataUrl, 'PNG', 15, y, 40, 40);
   // Footer
-  const footerY = pageHeight - 15;
+  const footerY = pageHeight - 20;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'italic');
-  doc.text(`Thank you for shopping with ${settings.name}!`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
+  doc.text('Thank you for shopping with CROWN!', doc.internal.pageSize.width / 2, footerY, { align: 'center' });
+  doc.text('Built with ❤️ at Cloudflare', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
   doc.save(`Invoice-${invoice.invoiceNumber}.pdf`);
 }

@@ -10,7 +10,8 @@ import { Product, Invoice, InvoiceItem } from '@shared/types';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Skeleton } from '@/components/ui/skeleton';interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}interface BadgeProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 export function BillingPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,7 +42,6 @@ export function BillingPage() {
       toast.error("Cart is empty. Add items to create a bill.");
       return;
     }
-
     for (const item of items) {
       const productInStock = products?.find((p) => p.id === item.id);
       if (!productInStock || productInStock.quantity < item.quantity) {
@@ -82,7 +82,6 @@ export function BillingPage() {
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)} />
-
           </div>
           <ScrollArea className="flex-1 pr-4 -mr-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -90,13 +89,11 @@ export function BillingPage() {
               Array.from({ length: 10 }).map((_, i) =>
               <Card key={i}><CardContent className="p-4"><Skeleton className="w-16 h-16 rounded-md mb-2" /><Skeleton className="h-4 w-full mb-1" /><Skeleton className="h-3 w-1/2" /></CardContent></Card>
               ) :
-
               filteredProducts?.map((product) =>
               <Card
                 key={product.id}
                 className={`cursor-pointer hover:shadow-lg transition-shadow ${product.quantity === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => product.quantity > 0 ? addItem(product) : toast.warning(`${product.name} is out of stock.`)}>
-
                     <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                       <div className="w-16 h-16 bg-muted rounded-md mb-2 flex items-center justify-center relative">
                         <span className="text-2xl font-bold text-muted-foreground">{product.name.charAt(0)}</span>
@@ -121,7 +118,6 @@ export function BillingPage() {
               <CardContent>
                 {items.length === 0 ?
                 <p className="text-center text-muted-foreground py-10">Cart is empty</p> :
-
                 <div className="space-y-4">
                     {items.map((item) =>
                   <div key={item.id} className="flex items-center justify-between">
@@ -180,5 +176,4 @@ export function BillingPage() {
         </div>
       </div>
     </div>);
-
 }
