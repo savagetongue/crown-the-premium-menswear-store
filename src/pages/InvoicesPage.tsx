@@ -14,6 +14,7 @@ import { InvoiceDetailSheet } from '@/components/invoice/InvoiceDetailSheet';
 import { generateInvoicePdf } from '@/lib/pdf-generator';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
+import { createWhatsAppLink } from '@/lib/utils';
 export function InvoicesPage() {
   const queryClient = useQueryClient();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -41,11 +42,11 @@ export function InvoicesPage() {
   const sendInvoiceMutation = useMutation({
     mutationFn: (invoiceId: string) => api<Invoice>(`/api/invoices/${invoiceId}/send`, { method: 'POST' }),
     onSuccess: (data) => {
-      toast.success(`Invoice #${data.invoiceNumber} sent successfully!`);
+      toast.success(`Invoice #${data.invoiceNumber} status updated to sent!`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
     onError: () => {
-      toast.error(`Failed to send invoice. Please try again.`);
+      toast.error(`Failed to update invoice status. Please try again.`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
   });
@@ -64,7 +65,17 @@ export function InvoicesPage() {
     }
   };
   const handleResendInvoice = (invoice: Invoice) => {
-    toast.info(`Sending invoice #${invoice.invoiceNumber}...`);
+    if (!settings) {
+      toast.error('Store settings not loaded. Cannot send message.');
+      return;
+    }
+    if (!invoice.customer.phone) {
+      toast.error('Customer phone number is not available.');
+      return;
+    }
+    toast.info(`Opening WhatsApp to resend invoice #${invoice.invoiceNumber}...`);
+    const whatsappUrl = createWhatsAppLink(invoice, settings);
+    window.open(whatsappUrl, '_blank');
     sendInvoiceMutation.mutate(invoice.id);
   };
   const renderMessagingStatus = (status?: 'pending' | 'sent' | 'failed') => {
@@ -149,7 +160,7 @@ export function InvoicesPage() {
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleResendInvoice(invoice)} disabled={sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id}>
                                 <Send className="mr-2 h-4 w-4" />
-                                {sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id ? 'Sending...' : 'Send Invoice'}
+                                {sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id ? 'Sending...' : 'Resend Invoice'}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

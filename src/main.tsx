@@ -18,6 +18,7 @@ import { InvoicesPage } from '@/pages/InvoicesPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { AppLayout } from './components/layout/AppLayout';
+import { PublicInvoicePage } from './pages/PublicInvoicePage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -31,6 +32,11 @@ const router = createBrowserRouter([
       { path: "/reports", element: <ReportsPage /> },
       { path: "/settings", element: <SettingsPage /> },
     ]
+  },
+  {
+    path: "/invoice/:invoiceId",
+    element: <PublicInvoicePage />,
+    errorElement: <RouteErrorBoundary />,
   }
 ]);
 // Do not touch this code

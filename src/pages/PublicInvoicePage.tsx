@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Invoice, StoreSettings } from '@shared/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -12,7 +12,7 @@ import { Printer, AlertTriangle } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 function InvoiceView({ invoice, settings }: { invoice: Invoice; settings: StoreSettings }) {
   return (
-    <Card className="w-full max-w-4xl mx-auto my-8 print:shadow-none print:border-none p-4 sm:p-6">
+    <Card className="w-full max-w-4xl mx-auto my-8 print:shadow-none print:border-none">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold">{settings.name}</CardTitle>
         <CardDescription className="text-muted-foreground">
@@ -20,7 +20,7 @@ function InvoiceView({ invoice, settings }: { invoice: Invoice; settings: StoreS
           Phone: {settings.phone}
         </CardDescription>
       </CardHeader>
-      <CardContent className="px-4 sm:px-8 py-6">
+      <CardContent className="px-8 py-6">
         <div className="flex justify-between items-start mb-6">
           <div>
             <h2 className="text-lg font-semibold">Invoice</h2>
@@ -34,29 +34,28 @@ function InvoiceView({ invoice, settings }: { invoice: Invoice; settings: StoreS
         <div className="mb-8">
           <h3 className="font-semibold">Bill To</h3>
           <p className="text-muted-foreground">{invoice.customer.name}</p>
+          <p className="text-muted-foreground">{invoice.customer.phone}</p>
         </div>
-        <div className="relative w-full overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead className="text-center">Qty</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Item</TableHead>
+              <TableHead className="text-center">Qty</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {invoice.items.map((item) => (
+              <TableRow key={item.productId}>
+                <TableCell className="font-medium">{item.productName}</TableCell>
+                <TableCell className="text-center">{item.quantity}</TableCell>
+                <TableCell className="text-right">₹{item.price.toFixed(2)}</TableCell>
+                <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoice.items.map((item) => (
-                <TableRow key={item.productId}>
-                  <TableCell className="font-medium">{item.productName}</TableCell>
-                  <TableCell className="text-center">{item.quantity}</TableCell>
-                  <TableCell className="text-right">₹{item.price.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">₹{(item.price * item.quantity).toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
         <div className="flex justify-end mt-6">
           <div className="w-full max-w-xs space-y-2">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{invoice.subTotal.toFixed(2)}</span></div>
@@ -69,6 +68,10 @@ function InvoiceView({ invoice, settings }: { invoice: Invoice; settings: StoreS
           <p><span className="font-semibold">Amount in words:</span> {invoice.amountInWords}</p>
         </div>
       </CardContent>
+      <CardFooter className="flex-col items-center justify-center text-center text-xs text-muted-foreground py-4 border-t">
+        <p>Thank you for your business!</p>
+        <p>Built with ❤️ at Cloudflare</p>
+      </CardFooter>
     </Card>
   );
 }
@@ -86,7 +89,7 @@ export function PublicInvoicePage() {
   const isLoading = isLoadingInvoice || isLoadingSettings;
   const error = invoiceError || settingsError;
   return (
-    <div className="min-h-screen bg-muted/40 p-2 sm:p-4 print:bg-white print:p-0">
+    <div className="min-h-screen bg-muted/40 p-4 print:bg-white print:p-0">
       <Toaster />
       <div className="flex justify-center mb-4 print:hidden">
         <Button onClick={() => window.print()} disabled={isLoading || !!error}>
@@ -96,7 +99,7 @@ export function PublicInvoicePage() {
       {isLoading && (
         <Card className="w-full max-w-4xl mx-auto my-8">
           <CardHeader><Skeleton className="h-8 w-3/4 mx-auto" /><Skeleton className="h-4 w-1/2 mx-auto mt-2" /></CardHeader>
-          <CardContent className="px-4 sm:px-8 py-6 space-y-6">
+          <CardContent className="px-8 py-6 space-y-6">
             <div className="flex justify-between"><Skeleton className="h-6 w-1/4" /><Skeleton className="h-6 w-1/4" /></div>
             <Skeleton className="h-6 w-1/3" />
             <div className="space-y-2">
@@ -106,6 +109,7 @@ export function PublicInvoicePage() {
             </div>
             <div className="flex justify-end"><div className="w-full max-w-xs space-y-2"><Skeleton className="h-6 w-full" /><Skeleton className="h-6 w-full" /></div></div>
           </CardContent>
+          <CardFooter><Skeleton className="h-4 w-1/2 mx-auto" /></CardFooter>
         </Card>
       )}
       {error && (

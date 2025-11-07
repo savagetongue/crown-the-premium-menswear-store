@@ -39,7 +39,7 @@ function amountToWords(amount: number): string {
   const rupees = words.trim();
   const paise = Math.round((amount - Math.floor(amount)) * 100);
   if (paise > 0) {
-    return `${rupees} Rupees and ${toWords(paise)} Paise Only`;
+    return `${rupes} Rupees and ${toWords(paise)} Paise Only`;
   } else {
     return `${rupees} Rupees Only`;
   }
@@ -108,6 +108,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const { items } = await InvoiceEntity.list(c.env);
     items.sort((a, b) => b.date - a.date);
     return ok(c, items);
+  });
+  app.get('/api/invoices/:id/public', async (c) => {
+    const { id } = c.req.param();
+    const invoice = new InvoiceEntity(c.env, id);
+    if (!(await invoice.exists())) {
+      return notFound(c, 'Invoice not found');
+    }
+    return ok(c, await invoice.getState());
   });
   app.post('/api/invoices', async (c) => {
     const invoiceData = (await c.req.json()) as Omit<Invoice, 'id' | 'invoiceNumber' | 'date' | 'status' | 'amountInWords' | 'rounding'>;

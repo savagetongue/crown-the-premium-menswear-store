@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Invoice, StoreSettings } from "@shared/types";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -40,4 +41,11 @@ export function amountToWords(amount: number): string {
   } else {
     return `${rupees} Rupees Only`;
   }
+}
+export function createWhatsAppLink(invoice: Invoice, settings: StoreSettings): string {
+  const invoiceUrl = `${window.location.origin}/invoice/${invoice.id}`;
+  const message = `Hello ${invoice.customer.name}! 👋\nThank you for shopping with ${settings.name}.\nYour invoice #${invoice.invoiceNumber} is ready.\nView or download your bill here: ${invoiceUrl}\nTotal: ₹${invoice.grandTotal.toFixed(2)}`;
+  const encodedMessage = encodeURIComponent(message);
+  const phoneNumber = invoice.customer.phone.replace(/[^0-9]/g, '');
+  return `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 }

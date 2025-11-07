@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { createWhatsAppLink } from '@/lib/utils';
 export function BillingPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,11 +37,11 @@ export function BillingPage() {
   const sendInvoiceMutation = useMutation({
     mutationFn: (invoice: Invoice) => api<Invoice>(`/api/invoices/${invoice.id}/send`, { method: 'POST' }),
     onSuccess: (data) => {
-      toast.success(`Invoice #${data.invoiceNumber} sent to customer!`);
+      toast.success(`Invoice #${data.invoiceNumber} status updated to sent!`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
     onError: (error, invoice) => {
-      toast.error(`Failed to send invoice #${invoice.invoiceNumber}. Please resend manually.`);
+      toast.error(`Failed to update invoice #${invoice.invoiceNumber} status. Please resend manually.`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
   });
@@ -54,8 +55,10 @@ export function BillingPage() {
       setCustomerName('');
       setCustomerPhone('');
       setBillDiscount(0);
-      if (data.customer.phone) {
-        toast.info(`Sending invoice to ${data.customer.phone}...`);
+      if (data.customer.phone && settings) {
+        toast.info(`Opening WhatsApp to send invoice to ${data.customer.phone}...`);
+        const whatsappUrl = createWhatsAppLink(data, settings);
+        window.open(whatsappUrl, '_blank');
         sendInvoiceMutation.mutate(data);
       }
     },
@@ -160,7 +163,7 @@ export function BillingPage() {
             </CardHeader>
             <div className="px-6 pb-4 space-y-3">
               <Input placeholder="Customer Name (default: Walk-in)" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-              <Input placeholder="Customer Phone (Optional)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+              <Input placeholder="Customer Phone (for WhatsApp)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
             </div>
             <ScrollArea className="flex-1">
               <CardContent>

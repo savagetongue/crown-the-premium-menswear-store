@@ -89,7 +89,7 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   doc.text(splitText, 15, y);
   y += splitText.length * 4 + 5;
   // QR Code
-  const invoiceUrl = `${window.location.origin}/invoices?view=${invoice.id}`;
+  const invoiceUrl = `${window.location.origin}/invoice/${invoice.id}`;
   const qrCodeDataUrl = await QRCode.toDataURL(invoiceUrl, {
     errorCorrectionLevel: 'H',
     width: 40,
