@@ -3,22 +3,52 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
-
-// Minimal real-world chat example types (shared by frontend and worker)
-export interface User {
+export interface Category {
   id: string;
   name: string;
 }
-
-export interface Chat {
+export interface Product {
   id: string;
-  title: string;
+  name: string;
+  sku: string;
+  price: number;
+  size?: string;
+  color?: string;
+  quantity: number;
+  stockLocation?: string;
+  categoryId: string;
 }
-
-export interface ChatMessage {
+export interface Customer {
+  name: string;
+  phone: string;
+}
+export interface InvoiceItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  discount: number; // in percentage or absolute value
+  discountType: 'percentage' | 'fixed';
+}
+export interface Invoice {
   id: string;
-  chatId: string;
-  userId: string;
-  text: string;
-  ts: number; // epoch millis
+  invoiceNumber: string;
+  date: number; // epoch timestamp
+  customer: Customer;
+  items: InvoiceItem[];
+  subTotal: number;
+  totalDiscount: number;
+  tax: number;
+  rounding: number;
+  grandTotal: number;
+  amountInWords: string;
+  status: 'paid' | 'pending' | 'cancelled';
+}
+export interface StoreSettings {
+  id: 'singleton';
+  name: string;
+  address: string;
+  logoUrl?: string;
+  phone?: string;
+  taxRate: number; // percentage
 }
