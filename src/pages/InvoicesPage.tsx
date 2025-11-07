@@ -8,12 +8,11 @@ import { MoreHorizontal, Eye, Download, Send, AlertCircle, CheckCircle, Clock } 
 import { format } from 'date-fns';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Invoice } from '@shared/types';
+import { Invoice, StoreSettings } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InvoiceDetailSheet } from '@/components/invoice/InvoiceDetailSheet';
 import { generateInvoicePdf } from '@/lib/pdf-generator';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 export function InvoicesPage() {
   const queryClient = useQueryClient();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -21,21 +20,29 @@ export function InvoicesPage() {
     queryKey: ['invoices'],
     queryFn: () => api('/api/invoices'),
   });
+  const { data: settings } = useQuery<StoreSettings>({
+    queryKey: ['settings'],
+    queryFn: () => api('/api/settings'),
+  });
   const sendInvoiceMutation = useMutation({
     mutationFn: (invoiceId: string) => api<Invoice>(`/api/invoices/${invoiceId}/send`, { method: 'POST' }),
     onSuccess: (data) => {
       toast.success(`Invoice #${data.invoiceNumber} sent successfully!`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
-    onError: (error, variables) => {
+    onError: () => {
       toast.error(`Failed to send invoice. Please try again.`);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
   });
   const handleDownloadPdf = async (invoice: Invoice) => {
+    if (!settings) {
+      toast.error('Store settings not loaded. Cannot generate PDF.');
+      return;
+    }
     toast.info(`Generating PDF for invoice #${invoice.invoiceNumber}...`);
     try {
-      await generateInvoicePdf(invoice);
+      await generateInvoicePdf(invoice, settings);
       toast.success(`PDF for invoice #${invoice.invoiceNumber} downloaded.`);
     } catch (error) {
       toast.error('Failed to generate PDF.');
@@ -127,7 +134,7 @@ export function InvoicesPage() {
                                 <Download className="mr-2 h-4 w-4" /> Download PDF
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleResendInvoice(invoice)} disabled={sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id}>
-                                <Send className="mr-2 h-4 w-4" /> 
+                                <Send className="mr-2 h-4 w-4" />
                                 {sendInvoiceMutation.isPending && sendInvoiceMutation.variables === invoice.id ? 'Sending...' : 'Send Invoice'}
                               </DropdownMenuItem>
                             </DropdownMenuContent>

@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { CategoryEntity, ProductEntity, InvoiceEntity, StoreSettingsEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
-import type { Invoice, Product, StoreSettings, Category, SalesOverTime } from "@shared/types";
-import { format } from 'date-fns';
+import type { Invoice, Product, StoreSettings, Category, SalesOverTime, TopSellingProduct } from "@shared/types";
+import { format, subDays } from 'date-fns';
 // This is a simplified version of the amountToWords function for the backend.
 // In a real-world scenario, this would be a shared utility.
 function amountToWords(amount: number): string {
@@ -194,5 +194,43 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     });
     const salesData: SalesOverTime[] = Object.entries(salesByMonth).map(([name, sales]) => ({ name, sales }));
     return ok(c, salesData);
+  });
+  app.get('/api/reports/top-selling', async (c) => {
+    const { items: invoices } = await InvoiceEntity.list(c.env);
+    const productSales = new Map<string, { name: string; unitsSold: number; totalRevenue: number }>();
+    invoices.forEach(invoice => {
+      invoice.items.forEach(item => {
+        const existing = productSales.get(item.productId) || { name: item.productName, unitsSold: 0, totalRevenue: 0 };
+        existing.unitsSold += item.quantity;
+        const itemTotal = item.price * item.quantity;
+        const discountAmount = item.discountType === 'percentage' ? itemTotal * (item.discount / 100) : item.discount;
+        existing.totalRevenue += itemTotal - discountAmount;
+        productSales.set(item.productId, existing);
+      });
+    });
+    const sortedProducts: TopSellingProduct[] = Array.from(productSales.entries())
+      .map(([productId, data]) => ({ productId, ...data }))
+      .sort((a, b) => b.unitsSold - a.unitsSold);
+    return ok(c, sortedProducts);
+  });
+  app.get('/api/reports/low-stock', async (c) => {
+    const threshold = parseInt(c.req.query('threshold') || '10');
+    const { items: products } = await ProductEntity.list(c.env);
+    const lowStockProducts = products.filter(p => p.quantity > 0 && p.quantity <= threshold);
+    return ok(c, lowStockProducts);
+  });
+  app.get('/api/reports/dead-stock', async (c) => {
+    const days = parseInt(c.req.query('days') || '90');
+    const sinceDate = subDays(new Date(), days);
+    const { items: invoices } = await InvoiceEntity.list(c.env);
+    const { items: products } = await ProductEntity.list(c.env);
+    const soldProductIds = new Set<string>();
+    invoices.forEach(invoice => {
+      if (new Date(invoice.date) >= sinceDate) {
+        invoice.items.forEach(item => soldProductIds.add(item.productId));
+      }
+    });
+    const deadStockProducts = products.filter(p => !soldProductIds.has(p.id));
+    return ok(c, deadStockProducts);
   });
 }

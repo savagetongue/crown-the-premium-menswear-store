@@ -3,12 +3,15 @@ import { Product } from '@shared/types';
 import { toast } from 'sonner';
 export interface CartItem extends Product {
   quantity: number;
+  discount: number;
+  discountType: 'percentage' | 'fixed';
 }
 type CartState = {
   items: CartItem[];
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  applyItemDiscount: (productId: string, discount: number, discountType: 'percentage' | 'fixed') => void;
   clearCart: () => void;
 };
 export const useCartStore = create<CartState>((set) => ({
@@ -27,7 +30,7 @@ export const useCartStore = create<CartState>((set) => ({
         };
       }
       toast.success(`${product.name} added to cart.`);
-      return { items: [...state.items, { ...product, quantity: 1 }] };
+      return { items: [...state.items, { ...product, quantity: 1, discount: 0, discountType: 'fixed' }] };
     }),
   removeItem: (productId) =>
     set((state) => ({
@@ -46,5 +49,11 @@ export const useCartStore = create<CartState>((set) => ({
         ),
       };
     }),
+  applyItemDiscount: (productId, discount, discountType) =>
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === productId ? { ...item, discount, discountType } : item
+      ),
+    })),
   clearCart: () => set({ items: [] }),
 }));

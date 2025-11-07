@@ -119,7 +119,7 @@ export function ProductForm({ product, onSubmit, onCancel, isSubmitting }: Produ
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingCategories}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isLoadingCategories}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />

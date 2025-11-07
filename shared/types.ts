@@ -27,7 +27,7 @@ export interface InvoiceItem {
   productName: string;
   quantity: number;
   price: number;
-  discount: number; // in percentage or absolute value
+  discount: number;
   discountType: 'percentage' | 'fixed';
 }
 export interface Invoice {
@@ -53,6 +53,12 @@ export interface StoreSettings {
   phone?: string;
   taxRate: number; // percentage
 }
+export interface StaffMember {
+  id: string;
+  name: string;
+  role: 'admin' | 'staff';
+  pin: string; // 4-digit PIN
+}
 // Reporting Types
 export interface ReportSummary {
   totalRevenue: number;
@@ -63,4 +69,10 @@ export interface ReportSummary {
 export interface SalesOverTime {
   name: string; // e.g., 'Jan', 'Feb'
   sales: number;
+}
+export interface TopSellingProduct {
+  productId: string;
+  name: string;
+  unitsSold: number;
+  totalRevenue: number;
 }

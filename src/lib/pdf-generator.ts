@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Invoice } from '@shared/types';
+import { Invoice, StoreSettings } from '@shared/types';
 import { format } from 'date-fns';
 import { amountToWords } from './utils';
 import QRCode from 'qrcode';
@@ -8,20 +8,20 @@ import QRCode from 'qrcode';
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
 }
-export async function generateInvoicePdf(invoice: Invoice) {
+export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettings) {
   const doc = new jsPDF() as jsPDFWithAutoTable;
   const pageHeight = doc.internal.pageSize.height;
   let y = 15;
   // Store Info
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('CROWN - The Premium Menswear', 15, y);
+  doc.text(settings.name, 15, y);
   y += 8;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('123 Fashion Street, Metro City, 12345', 15, y);
+  doc.text(settings.address, 15, y);
   y += 5;
-  doc.text('Phone: +91 98765 43210', 15, y);
+  doc.text(`Phone: ${settings.phone || 'N/A'}`, 15, y);
   y += 10;
   // Invoice Info
   doc.setFontSize(12);
@@ -42,12 +42,13 @@ export async function generateInvoicePdf(invoice: Invoice) {
     index + 1,
     item.productName,
     item.quantity,
-    `₹${item.price.toFixed(2)}`,
+    `��${item.price.toFixed(2)}`,
+    item.discount > 0 ? (item.discountType === 'fixed' ? `-₹${item.discount.toFixed(2)}` : `-${item.discount}%`) : '-',
     `₹${(item.price * item.quantity).toFixed(2)}`,
   ]);
   doc.autoTable({
     startY: y,
-    head: [['#', 'Item Description', 'Qty', 'Unit Price', 'Total']],
+    head: [['#', 'Item', 'Qty', 'Price', 'Discount', 'Total']],
     body: tableData,
     theme: 'striped',
     headStyles: { fillColor: [23, 37, 84] }, // Deep Indigo
@@ -96,7 +97,7 @@ export async function generateInvoicePdf(invoice: Invoice) {
   const footerY = pageHeight - 20;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'italic');
-  doc.text('Thank you for shopping with CROWN!', doc.internal.pageSize.width / 2, footerY, { align: 'center' });
+  doc.text(`Thank you for shopping with ${settings.name}!`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
   doc.text('Built with ❤️ at Cloudflare', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
   doc.save(`Invoice-${invoice.invoiceNumber}.pdf`);
 }
