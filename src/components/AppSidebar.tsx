@@ -30,7 +30,7 @@ export function AppSidebar({
   onLinkClick?: () => void;
 }): JSX.Element {
   return (
-    <aside className="w-full flex-col bg-muted/40 flex">
+    <aside className="w-64 flex-col bg-muted/40 hidden sm:flex">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <NavLink to="/" className="flex items-center gap-2 font-semibold">
