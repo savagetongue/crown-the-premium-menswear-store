@@ -81,7 +81,8 @@ function runSetupCommands() {
     "bun add jspdf@^2.5.1",
     "bun add jspdf-autotable@^3.8.2",
     "bun add qrcode.react@^3.1.0",
-    "bun install qrcode"
+    "bun install qrcode",
+    "bun add @types/qrcode"
 ];
     
     if (commands.length === 0) {
