@@ -11,18 +11,19 @@ interface jsPDFWithAutoTable extends jsPDF {
 export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettings) {
   const doc = new jsPDF() as jsPDFWithAutoTable;
   const pageHeight = doc.internal.pageSize.height;
-  let y = 15;
-  // Store Info
-  doc.setFontSize(20);
+  const pageWidth = doc.internal.pageSize.width;
+  let y = 20;
+  // Store Info - Centered
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text(settings.name, 15, y);
+  doc.text(settings.name, pageWidth / 2, y, { align: 'center' });
   y += 8;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(settings.address, 15, y);
+  doc.text(settings.address, pageWidth / 2, y, { align: 'center' });
   y += 5;
-  doc.text(`Phone: ${settings.phone || 'N/A'}`, 15, y);
-  y += 10;
+  doc.text(`Phone: ${settings.phone || 'N/A'}`, pageWidth / 2, y, { align: 'center' });
+  y += 12;
   // Invoice Info
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
@@ -42,7 +43,7 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
     index + 1,
     item.productName,
     item.quantity,
-    `��${item.price.toFixed(2)}`,
+    `₹${item.price.toFixed(2)}`,
     item.discount > 0 ? (item.discountType === 'fixed' ? `-₹${item.discount.toFixed(2)}` : `-${item.discount}%`) : '-',
     `₹${(item.price * item.quantity).toFixed(2)}`,
   ]);
@@ -98,6 +99,6 @@ export async function generateInvoicePdf(invoice: Invoice, settings: StoreSettin
   doc.setFontSize(10);
   doc.setFont('helvetica', 'italic');
   doc.text(`Thank you for shopping with ${settings.name}!`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
-  doc.text('Built with ❤️ at Cloudflare', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
+  doc.text('Built with ❤��� at Cloudflare', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
   doc.save(`Invoice-${invoice.invoiceNumber}.pdf`);
 }

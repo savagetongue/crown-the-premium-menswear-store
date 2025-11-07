@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { CategoryEntity, ProductEntity, InvoiceEntity, StoreSettingsEntity } from "./entities";
+import { CategoryEntity, ProductEntity, InvoiceEntity, StoreSettingsEntity, StaffEntity } from "./entities";
 import { ok, bad, notFound } from './core-utils';
-import type { Invoice, Product, StoreSettings, Category, SalesOverTime, TopSellingProduct } from "@shared/types";
+import type { Invoice, Product, StoreSettings, Category, SalesOverTime, TopSellingProduct, StaffMember } from "@shared/types";
 import { format, subDays } from 'date-fns';
 // This is a simplified version of the amountToWords function for the backend.
 // In a real-world scenario, this would be a shared utility.
@@ -169,6 +169,38 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     await settingsEntity.patch(settingsData);
     const updatedSettings = await settingsEntity.getState();
     return ok(c, updatedSettings);
+  });
+  // STAFF
+  app.get('/api/staff', async (c) => {
+    const { items } = await StaffEntity.list(c.env);
+    return ok(c, items);
+  });
+  app.post('/api/staff', async (c) => {
+    const staffData = await c.req.json<Omit<StaffMember, 'id'>>();
+    if (!staffData.name || !staffData.pin || !staffData.role) {
+      return bad(c, 'Missing required staff details');
+    }
+    const newStaff: StaffMember = { ...staffData, id: crypto.randomUUID() };
+    const created = await StaffEntity.create(c.env, newStaff);
+    return ok(c, created);
+  });
+  app.put('/api/staff/:id', async (c) => {
+    const { id } = c.req.param();
+    const staffData = await c.req.json<Partial<StaffMember>>();
+    const staff = new StaffEntity(c.env, id);
+    if (!(await staff.exists())) {
+      return notFound(c, 'Staff member not found');
+    }
+    await staff.patch(staffData);
+    return ok(c, await staff.getState());
+  });
+  app.delete('/api/staff/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await StaffEntity.delete(c.env, id);
+    if (!deleted) {
+      return notFound(c, 'Staff member not found');
+    }
+    return ok(c, { id });
   });
   // REPORTS
   app.get('/api/reports/summary', async (c) => {

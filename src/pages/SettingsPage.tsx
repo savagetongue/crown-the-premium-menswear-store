@@ -13,8 +13,11 @@ import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { StaffForm, StaffFormData } from '@/components/settings/StaffForm';
 const settingsSchema = z.object({
   name: z.string().min(3, 'Store name must be at least 3 characters'),
   address: z.string().min(10, 'Address seems too short'),
@@ -86,45 +89,129 @@ function StoreDetailsTab() {
   );
 }
 function StaffManagementTab() {
+  const queryClient = useQueryClient();
   const [isFormOpen, setFormOpen] = useState(false);
-  // Mock data for now
-  const staff: StaffMember[] = [
-    { id: '1', name: 'Admin User', role: 'admin', pin: '****' },
-    { id: '2', name: 'Cashier 1', role: 'staff', pin: '****' },
-  ];
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const { data: staff, isLoading } = useQuery<StaffMember[]>({
+    queryKey: ['staff'],
+    queryFn: () => api('/api/staff'),
+  });
+  const createStaffMutation = useMutation({
+    mutationFn: (newStaff: StaffFormData) => api<StaffMember>('/api/staff', { method: 'POST', body: JSON.stringify(newStaff) }),
+    onSuccess: () => {
+      toast.success('Staff member added successfully!');
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      setFormOpen(false);
+    },
+    onError: (error) => toast.error(`Failed to add staff: ${error.message}`),
+  });
+  const updateStaffMutation = useMutation({
+    mutationFn: (updatedStaff: StaffMember) => api<StaffMember>(`/api/staff/${updatedStaff.id}`, { method: 'PUT', body: JSON.stringify(updatedStaff) }),
+    onSuccess: () => {
+      toast.success('Staff member updated successfully!');
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      setFormOpen(false);
+      setSelectedStaff(null);
+    },
+    onError: (error) => toast.error(`Failed to update staff: ${error.message}`),
+  });
+  const deleteStaffMutation = useMutation({
+    mutationFn: (staffId: string) => api(`/api/staff/${staffId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      toast.success('Staff member deleted successfully!');
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      setDeleteDialogOpen(false);
+      setSelectedStaff(null);
+    },
+    onError: (error) => toast.error(`Failed to delete staff: ${error.message}`),
+  });
+  const handleAdd = () => {
+    setSelectedStaff(null);
+    setFormOpen(true);
+  };
+  const handleEdit = (member: StaffMember) => {
+    setSelectedStaff(member);
+    setFormOpen(true);
+  };
+  const handleDelete = (member: StaffMember) => {
+    setSelectedStaff(member);
+    setDeleteDialogOpen(true);
+  };
+  const handleFormSubmit = (data: StaffFormData) => {
+    if (selectedStaff) {
+      updateStaffMutation.mutate({ ...data, id: selectedStaff.id });
+    } else {
+      createStaffMutation.mutate(data);
+    }
+  };
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Staff Management</CardTitle>
-          <CardDescription>Add, edit, or remove staff members.</CardDescription>
-        </div>
-        <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
-          <DialogTrigger asChild>
-            <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Staff</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Add New Staff Member</DialogTitle></DialogHeader>
-            {/* Staff form will go here */}
-            <p className="py-4 text-center text-muted-foreground">(Staff form UI to be implemented)</p>
-          </DialogContent>
-        </Dialog>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
-          <TableBody>
-            {staff.map(member => (
-              <TableRow key={member.id}>
-                <TableCell className="font-medium">{member.name}</TableCell>
-                <TableCell className="capitalize">{member.role}</TableCell>
-                <TableCell className="text-right"><Button variant="ghost" size="sm">Edit</Button></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Staff Management</CardTitle>
+            <CardDescription>Add, edit, or remove staff members.</CardDescription>
+          </div>
+          <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Staff</Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                  </TableRow>
+                ))
+              ) : staff?.map(member => (
+                <TableRow key={member.id}>
+                  <TableCell className="font-medium">{member.name}</TableCell>
+                  <TableCell className="capitalize">{member.role}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(member)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(member)}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{selectedStaff ? 'Edit Staff Member' : 'Add New Staff Member'}</DialogTitle></DialogHeader>
+          <StaffForm
+            staffMember={selectedStaff}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setFormOpen(false)}
+            isSubmitting={createStaffMutation.isPending || updateStaffMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete the staff member "{selectedStaff?.name}".</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => selectedStaff && deleteStaffMutation.mutate(selectedStaff.id)} disabled={deleteStaffMutation.isPending} className="bg-destructive hover:bg-destructive/90">
+              {deleteStaffMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 export function SettingsPage() {
