@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -42,28 +43,43 @@ interface ProductFormProps {
 export function ProductForm({ product, onSubmit, onCancel, isSubmitting }: ProductFormProps) {
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: product
-      ? {
-          name: product.name,
-          sku: product.sku,
-          price: product.price,
-          quantity: product.quantity,
-          categoryId: product.categoryId,
-          size: product.size || '',
-          color: product.color || '',
-          stockLocation: product.stockLocation || '',
-        }
-      : {
-          name: '',
-          sku: '',
-          price: 0,
-          quantity: 0,
-          categoryId: '',
-          size: '',
-          color: '',
-          stockLocation: '',
-        },
+    defaultValues: {
+      name: '',
+      sku: '',
+      price: 0,
+      quantity: 0,
+      categoryId: '',
+      size: '',
+      color: '',
+      stockLocation: '',
+      ...product,
+    },
   });
+  useEffect(() => {
+    if (product) {
+      form.reset({
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
+        quantity: product.quantity,
+        categoryId: product.categoryId,
+        size: product.size || '',
+        color: product.color || '',
+        stockLocation: product.stockLocation || '',
+      });
+    } else {
+      form.reset({
+        name: '',
+        sku: '',
+        price: 0,
+        quantity: 0,
+        categoryId: '',
+        size: '',
+        color: '',
+        stockLocation: '',
+      });
+    }
+  }, [product, form]);
   const { data: categories, isLoading: isLoadingCategories } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: () => api('/api/categories'),
@@ -104,7 +120,7 @@ export function ProductForm({ product, onSubmit, onCancel, isSubmitting }: Produ
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isLoadingCategories}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingCategories}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />

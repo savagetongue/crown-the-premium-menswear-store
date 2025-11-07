@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-const mockInvoices = [
-  { id: 'inv1', invoiceNumber: 'INV-2024-001', date: new Date(), customer: { name: 'John Doe', phone: '1234567890' }, grandTotal: 3499, status: 'paid' },
-  { id: 'inv2', invoiceNumber: 'INV-2024-002', date: new Date(Date.now() - 86400000), customer: { name: 'Jane Smith', phone: '0987654321' }, grandTotal: 5999, status: 'paid' },
-  { id: 'inv3', invoiceNumber: 'INV-2024-003', date: new Date(Date.now() - 172800000), customer: { name: 'Peter Jones', phone: '1122334455' }, grandTotal: 1999, status: 'paid' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api-client';
+import { Invoice } from '@shared/types';
+import { Skeleton } from '@/components/ui/skeleton';
 export function InvoicesPage() {
+  const { data: invoices, isLoading } = useQuery<Invoice[]>({
+    queryKey: ['invoices'],
+    queryFn: () => api('/api/invoices'),
+  });
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
@@ -29,19 +32,37 @@ export function InvoicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                    <TableCell>{format(invoice.date, 'PPP')}</TableCell>
-                    <TableCell>{invoice.customer.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </Badge>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : invoices?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No invoices found.
                     </TableCell>
-                    <TableCell className="text-right">₹{invoice.grandTotal.toFixed(2)}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  invoices?.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                      <TableCell>{format(new Date(invoice.date), 'PPP')}</TableCell>
+                      <TableCell>{invoice.customer.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">₹{invoice.grandTotal.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
