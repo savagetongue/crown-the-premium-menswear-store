@@ -42,47 +42,34 @@ interface ProductFormProps {
 export function ProductForm({ product, onSubmit, onCancel, isSubmitting }: ProductFormProps) {
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: '',
-      sku: '',
-      price: 0,
-      quantity: 0,
-      categoryId: '',
-      size: '',
-      color: '',
-      stockLocation: '',
-      ...product,
-    },
+    defaultValues: product
+      ? {
+          name: product.name,
+          sku: product.sku,
+          price: product.price,
+          quantity: product.quantity,
+          categoryId: product.categoryId,
+          size: product.size || '',
+          color: product.color || '',
+          stockLocation: product.stockLocation || '',
+        }
+      : {
+          name: '',
+          sku: '',
+          price: 0,
+          quantity: 0,
+          categoryId: '',
+          size: '',
+          color: '',
+          stockLocation: '',
+        },
   });
-  useEffect(() => {
-    if (product) {
-      form.reset({
-        name: product.name,
-        sku: product.sku,
-        price: product.price,
-        quantity: product.quantity,
-        categoryId: product.categoryId,
-        size: product.size || '',
-        color: product.color || '',
-        stockLocation: product.stockLocation || '',
-      });
-    } else {
-      form.reset({
-        name: '',
-        sku: '',
-        price: 0,
-        quantity: 0,
-        categoryId: '',
-        size: '',
-        color: '',
-        stockLocation: '',
-      });
-    }
-  }, [product, form]);
-  const { data: categories, isLoading: isLoadingCategories } = useQuery<Category[]>({
+
+  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery<{ items: Category[] }>({
     queryKey: ['categories'],
     queryFn: () => api('/api/categories'),
   });
+  const categories = categoriesData?.items;
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

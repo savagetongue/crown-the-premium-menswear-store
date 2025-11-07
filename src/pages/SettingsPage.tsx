@@ -31,8 +31,8 @@ function StoreDetailsTab() {
     queryKey: ['settings'],
     queryFn: () => api('/api/settings'),
   });
-  const updateSettingsMutation = useMutation({
-    mutationFn: (updatedSettings: SettingsFormData) => api<StoreSettings>('/api/settings', { method: 'POST', body: JSON.stringify(updatedSettings) }),
+  const updateSettingsMutation = useMutation<StoreSettings, Error, SettingsFormData>({
+    mutationFn: (updatedSettings) => api<StoreSettings>('/api/settings', { method: 'POST', body: JSON.stringify(updatedSettings) }),
     onSuccess: (data) => {
       toast.success('Settings updated successfully!');
       queryClient.setQueryData(['settings'], data);
@@ -97,8 +97,8 @@ function StaffManagementTab() {
     queryKey: ['staff'],
     queryFn: () => api('/api/staff'),
   });
-  const createStaffMutation = useMutation({
-    mutationFn: (newStaff: StaffFormData) => api<StaffMember>('/api/staff', { method: 'POST', body: JSON.stringify(newStaff) }),
+  const createStaffMutation = useMutation<StaffMember, Error, StaffFormData>({
+    mutationFn: (newStaff) => api<StaffMember>('/api/staff', { method: 'POST', body: JSON.stringify(newStaff) }),
     onSuccess: () => {
       toast.success('Staff member added successfully!');
       queryClient.invalidateQueries({ queryKey: ['staff'] });
@@ -106,8 +106,8 @@ function StaffManagementTab() {
     },
     onError: (error) => toast.error(`Failed to add staff: ${error.message}`),
   });
-  const updateStaffMutation = useMutation({
-    mutationFn: (updatedStaff: StaffMember) => api<StaffMember>(`/api/staff/${updatedStaff.id}`, { method: 'PUT', body: JSON.stringify(updatedStaff) }),
+  const updateStaffMutation = useMutation<StaffMember, Error, StaffMember>({
+    mutationFn: (updatedStaff) => api<StaffMember>(`/api/staff/${updatedStaff.id}`, { method: 'PUT', body: JSON.stringify(updatedStaff) }),
     onSuccess: () => {
       toast.success('Staff member updated successfully!');
       queryClient.invalidateQueries({ queryKey: ['staff'] });
@@ -116,8 +116,8 @@ function StaffManagementTab() {
     },
     onError: (error) => toast.error(`Failed to update staff: ${error.message}`),
   });
-  const deleteStaffMutation = useMutation({
-    mutationFn: (staffId: string) => api(`/api/staff/${staffId}`, { method: 'DELETE' }),
+  const deleteStaffMutation = useMutation<unknown, Error, string>({
+    mutationFn: (staffId) => api(`/api/staff/${staffId}`, { method: 'DELETE' }),
     onSuccess: () => {
       toast.success('Staff member deleted successfully!');
       queryClient.invalidateQueries({ queryKey: ['staff'] });
